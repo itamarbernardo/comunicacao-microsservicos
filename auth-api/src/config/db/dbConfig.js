@@ -8,7 +8,7 @@ import Sequelize from "sequelize";
 //   DB_PORT,
 // } from "../constants/secrets.js";
 
-const sequelize = new Sequelize('auth-db', 'postgres', '1234', {
+const sequelize = new Sequelize('auth-db', 'admin', '1234', {
   host: 'localhost',
 //   port: DB_PORT,
   dialect: "postgres",

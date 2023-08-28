@@ -2,8 +2,10 @@ package br.com.comunicacaomicrosservicos.productapi.modules.product.controller;
 
 
 import br.com.comunicacaomicrosservicos.productapi.config.exception.SuccessResponse;
+import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.ProductCheckStockRequest;
 import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.ProductRequest;
 import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.ProductResponse;
+import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.ProductSalesResponse;
 import br.com.comunicacaomicrosservicos.productapi.modules.product.service.ProductService;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +56,19 @@ public class ProductController {
                                   @PathVariable Integer id) {
         return productService.update(request, id);
     }
-
     @DeleteMapping("{id}")
     public SuccessResponse delete(@PathVariable Integer id) {
         return productService.delete(id);
     }
 
+    @PostMapping("check-stock")
+    public SuccessResponse checkProductStock(@RequestBody ProductCheckStockRequest request){
+        return productService.checkProductsStock(request);
+    }
+
+    @GetMapping("{id}/sales")
+    public ProductSalesResponse findProductSales(@PathVariable Integer id){
+        //Encontrar as vendas de um produto
+        return productService.findProductSales(id);
+    }
 }

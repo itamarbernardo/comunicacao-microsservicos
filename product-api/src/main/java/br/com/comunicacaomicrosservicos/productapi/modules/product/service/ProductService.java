@@ -3,22 +3,27 @@ package br.com.comunicacaomicrosservicos.productapi.modules.product.service;
 import br.com.comunicacaomicrosservicos.productapi.config.exception.SuccessResponse;
 import br.com.comunicacaomicrosservicos.productapi.config.exception.ValidationException;
 import br.com.comunicacaomicrosservicos.productapi.modules.category.service.CategoryService;
-import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.ProductRequest;
-import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.ProductResponse;
+import br.com.comunicacaomicrosservicos.productapi.modules.product.dto.*;
 import br.com.comunicacaomicrosservicos.productapi.modules.product.model.Product;
 import br.com.comunicacaomicrosservicos.productapi.modules.product.repository.ProductRepository;
+import br.com.comunicacaomicrosservicos.productapi.modules.sales.client.SalesClient;
+import br.com.comunicacaomicrosservicos.productapi.modules.sales.dto.SalesConfirmationDTO;
+import br.com.comunicacaomicrosservicos.productapi.modules.sales.enums.SalesStatus;
+import br.com.comunicacaomicrosservicos.productapi.modules.sales.rabbitmq.SalesConfirmationSender;
 import br.com.comunicacaomicrosservicos.productapi.modules.supplier.service.SupplierService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
-@Slf4j
+@Slf4j //Permite que coloquemos log's
 @Service
 @AllArgsConstructor
 public class ProductService {
@@ -29,6 +34,10 @@ public class ProductService {
     private SupplierService supplierService;
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private SalesConfirmationSender salesConfirmationSender;
+    @Autowired
+    private SalesClient salesClient;
 
     public ProductResponse save(ProductRequest request){
         validateProductDataInformed(request);
@@ -152,4 +161,107 @@ public class ProductService {
         productRepository.deleteById(id);
         return SuccessResponse.create("O Produto foi deletado com sucesso.");
     }
+
+    public void updateProductStock(ProductStockDTO product) {
+        try {
+            validateStockUpdateData(product);
+            updateStock(product);
+        } catch (Exception ex) {
+            log.error("Erro ao tentar atualizar o Estoque for message with error: {}", ex.getMessage(), ex);
+            var rejectedMessage = new SalesConfirmationDTO(product.getSalesId(), SalesStatus.REJECTED, product.getTransactionid());
+            salesConfirmationSender.sendSalesConfirmationMessage(rejectedMessage);
+        }
+    }
+
+    @Transactional //Se algo der errado, ele faz um Rollback no Banco de dados
+    private void updateStock(ProductStockDTO product) {
+        var productsForUpdate = new ArrayList<Product>();
+        product
+                .getProducts()
+                .forEach(salesProduct -> {
+                    var existingProduct = findById(salesProduct.getProductId());
+                    validateQuantityInStock(salesProduct, existingProduct);
+                    existingProduct.updateStock(salesProduct.getQuantity());
+                    productsForUpdate.add(existingProduct);
+                });
+        if (!isEmpty(productsForUpdate)) {
+            productRepository.saveAll(productsForUpdate);
+            var approvedMessage = new SalesConfirmationDTO(product.getSalesId(), SalesStatus.APPROVED, product.getTransactionid());
+            salesConfirmationSender.sendSalesConfirmationMessage(approvedMessage);
+        }
+    }
+
+    private void validateQuantityInStock(ProductQuantityDTO salesProduct,
+                                         Product existingProduct) {
+        if (salesProduct.getQuantity() > existingProduct.getQuantityAvailable()) {
+            throw new ValidationException(
+                    String.format("Não há unidades suficientes do produto %s em estoque.", existingProduct.getId()));
+        }
+    }
+    private void validateStockUpdateData(ProductStockDTO product) {
+        if (isEmpty(product)
+                || isEmpty(product.getSalesId())) {
+            throw new ValidationException("Os produtos e o ID da Venda precisam ser informados.");
+        }
+        if (isEmpty(product.getProducts())) {
+            throw new ValidationException("Os produdos da venda precisam ser informados.");
+        }
+        product
+                .getProducts()
+                .forEach(salesProduct -> {
+                    if (isEmpty(salesProduct.getQuantity())
+                            || isEmpty(salesProduct.getProductId())) {
+                        throw new ValidationException("O productID e a quantidade precisa ser informada.");
+                    }
+                });
+    }
+
+
+    public ProductSalesResponse findProductSales(Integer id) {
+        var product = findById(id);
+        try {
+            var sales = salesClient.findSalesByProductId(product.getId()).orElseThrow( () -> new ValidationException("Não foram encontradas vendas para este produto"));
+            return ProductSalesResponse.of(product, sales.getSalesIds());
+        }catch (Exception ex){
+            ex.printStackTrace();
+            throw new ValidationException("Houve um erro ao tentar recuperar as vendas do produto");
+        }
+    }
+
+    public SuccessResponse checkProductsStock(ProductCheckStockRequest request) {
+        try {
+            /*
+            var currentRequest = getCurrentRequest();
+            var transactionid = currentRequest.getHeader(TRANSACTION_ID);
+            var serviceid = currentRequest.getAttribute(SERVICE_ID);
+            log.info("Request to POST product stock with data {} | [transactionID: {} | serviceID: {}]",
+                    objectMapper.writeValueAsString(request), transactionid, serviceid);
+            */
+            if (isEmpty(request) || isEmpty(request.getProducts())) {
+
+                throw new ValidationException("O Request data e os produtos precisam ser informados.");
+            }
+            request
+                    .getProducts()
+                    .forEach(this::validateStock);
+            var response = SuccessResponse.create("O estoque está OK!");
+
+            //log.info("Response to POST product stock with data {} | [transactionID: {} | serviceID: {}]",
+            //        objectMapper.writeValueAsString(response), transactionid, serviceid);
+            return response;
+        } catch (Exception ex) {
+            throw new ValidationException(ex.getMessage());
+        }
+    }
+
+    private void validateStock(ProductQuantityDTO productQuantity) {
+        if (isEmpty(productQuantity.getProductId()) || isEmpty(productQuantity.getQuantity())) {
+            throw new ValidationException("ID do Produto e a quantidade precisam ser informados.");
+        }
+        var product = findById(productQuantity.getProductId());
+        if (productQuantity.getQuantity() > product.getQuantityAvailable()) {
+            throw new ValidationException(String.format("O produto %s está sem estoque.", product.getId()));
+        }
+    }
+
 }
