@@ -25,11 +25,10 @@ public class AuthInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request,
                              HttpServletResponse response,
                              Object handler) {
-        /*
+
         if (isOptions(request) || isPublicUrl(request.getRequestURI())) {
             return true;
         }
-        */
 
         if (isOptions(request)) {
             return true;
@@ -44,13 +43,13 @@ public class AuthInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    /*
+
     private boolean isPublicUrl(String url) {
-        return Urls.PROTECTED_URLS
+        return Urls.PROTECTED_URLs
                 .stream()
-                .noneMatch(url::contains);
+                .noneMatch(url::contains); //Vai usar o metodo contains dentro de cada url do PROTECTED_URLS
     }
-    */
+
 
     private boolean isOptions(HttpServletRequest request) {
         return HttpMethod.OPTIONS.name().equals(request.getMethod());

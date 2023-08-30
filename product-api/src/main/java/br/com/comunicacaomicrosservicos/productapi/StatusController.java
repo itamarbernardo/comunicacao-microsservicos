@@ -9,17 +9,25 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.HashMap;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/")
 public class StatusController {
 
-    @GetMapping("/status")
+    @GetMapping //Quando não coloca o endereço, é como se fosse o "/"
+    public ResponseEntity<HashMap<String, Object>> getApiRootStatus(){ //Mapeia a raiz da API
+        return ResponseEntity.ok(getSucessResponse());
+    }
+    @GetMapping("api/status")
     public ResponseEntity<HashMap<String, Object>> getApiStatus(){
 
+        return ResponseEntity.ok(getSucessResponse());
+    }
+
+    private HashMap<String, Object> getSucessResponse(){
         var response = new HashMap<String, Object>();
         response.put("service", "Product-Api");
         response.put("status", "up");
         response.put("httpStatus", HttpStatus.OK.value());
 
-        return ResponseEntity.ok(response);
+        return response;
     }
 }
