@@ -17,19 +17,21 @@ const CONTAINER_ENV = "container";
 
 export async function connectRabbitMq() {
     //Se a aplicacao tiver rodando com container, esperamos 30s pra poder se conectar ao RabbitMQ (pra dar tempo dele startar)
-    const env = process.env.NODE_ENV
-    if(env === CONTAINER_ENV){
-        console.info("Esperando o RabbitMQ iniciar....")
-        setInterval( () => {
-            connectRabbitMqAndCreateQueues()
-        }, HALF_MINUTE)
-    }
-    else{
-        connectRabbitMqAndCreateQueues();
-    }
-
+    // const env = process.env.NODE_ENV
+    // if(env === CONTAINER_ENV){
+    //     console.info("Esperando o RabbitMQ iniciar....")
+    //     setInterval( () => {
+    //         connectRabbitMqAndCreateQueues()
+    //     }, HALF_MINUTE)
+    // }
+    // else{
+    //     connectRabbitMqAndCreateQueues();
+    // }
+    connectRabbitMqAndCreateQueues();
+    
 }
 
+//timeout => Espera esse tempo e fica tentando se conectar, se não conseguir nesse tempo, ele lança um erro
 async function connectRabbitMqAndCreateQueues() {
   amqp.connect(RABBIT_MQ_URL, { timeout: 180000 }, (error, connection) => {
     if (error) {
