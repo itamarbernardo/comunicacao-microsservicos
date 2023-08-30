@@ -11,13 +11,11 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
+@RequiredArgsConstructor //Coloca no construtor apenas os atributos que estiverem como "final"
 public class SalesConfirmationSender {
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
-    @Autowired
-    private ObjectMapper objectMapper;
 
+    private final RabbitTemplate rabbitTemplate;
+    private final ObjectMapper objectMapper;
     @Value("${app-config.rabbit.exchange.product}")
     private String productTopicExchange;
 

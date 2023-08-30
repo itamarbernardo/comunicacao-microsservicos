@@ -12,14 +12,11 @@ import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
+@RequiredArgsConstructor //Coloca no construtor apenas os atributos com "final"
 public class ProductStockListener {
 
-    @Autowired
-    private ProductService productService;
-    @Autowired
-    private ObjectMapper objectMapper;
-
+    private final ProductService productService;
+    private final ObjectMapper objectMapper;
     @RabbitListener(queues = "${app-config.rabbit.queue.product-stock}")
     public void recieveProductStockMessage(ProductStockDTO product) throws JsonProcessingException {
         log.info("Recebendo mensagem com conteudo: {} e TransactionId {}",

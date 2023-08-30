@@ -18,12 +18,12 @@ import java.util.stream.Collectors;
 import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Service
-@AllArgsConstructor(onConstructor_ = { @Lazy})
+@AllArgsConstructor(onConstructor_ = { @Lazy })
 public class SupplierService {
-    @Autowired
-    private SupplierRepository supplierRepository;
+
+    private final SupplierRepository supplierRepository;
     @Lazy
-    private ProductService productService;
+    private final ProductService productService;
 
     public List<SupplierResponse> findAll() {
         return supplierRepository

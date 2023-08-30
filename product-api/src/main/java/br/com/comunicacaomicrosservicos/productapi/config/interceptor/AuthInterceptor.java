@@ -19,8 +19,7 @@ public class AuthInterceptor implements HandlerInterceptor {
     private static final String AUTHORIZATION = "Authorization";
     private static final String TRANSACTION_ID = "transactionid";
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     @Override
     public boolean preHandle(HttpServletRequest request,

@@ -18,8 +18,7 @@ import java.util.List;
 @RequestMapping("/api/product")
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
 
     @PostMapping
     public ProductResponse save(@RequestBody ProductRequest request) {
