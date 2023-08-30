@@ -22,9 +22,8 @@ public class ProductStockListener {
 
     @RabbitListener(queues = "${app-config.rabbit.queue.product-stock}")
     public void recieveProductStockMessage(ProductStockDTO product) throws JsonProcessingException {
-        log.info("Recebendo mensagem com conteudo: {} e TransactionID: {}",
-                objectMapper.writeValueAsString(product),
-                product.getTransactionid());
+        log.info("Recebendo mensagem com conteudo: {} e TransactionId {}",
+                objectMapper.writeValueAsString(product), product.getTransactionid());
         //Lê a fila e manda pro ProductService pra atualizar o estoque dos produtos
         productService.updateProductStock(product);
     }

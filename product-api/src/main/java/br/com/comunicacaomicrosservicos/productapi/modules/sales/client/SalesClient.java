@@ -11,6 +11,6 @@ import java.util.Optional;
 @FeignClient(name = "salesClient", contextId = "salesClient", url = "${app-config.services.sales}")
 public interface SalesClient {
 
-    @GetMapping("products/{productId}")
+    @GetMapping("/api/orders/product/{productId}") //Vai fazer uma requisicao a SALES-API pra pegar os IDs das vendas que contém o produto
     Optional<SalesProductResponse> findSalesByProductId(@PathVariable Integer productId);
 }

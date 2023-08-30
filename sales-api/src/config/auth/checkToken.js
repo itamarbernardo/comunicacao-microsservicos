@@ -1,0 +1,37 @@
+import jwt from "jsonwebtoken";
+import { promisify } from "util";
+
+import AuthException from "./AuthException.js";
+
+import { API_SECRET } from "../constants/secrets.js";
+import { UNAUTHORIZED, INTERNAL_SERVER_ERROR } from "../constants/httpStatus.js";
+
+const emptySpace = " ";
+
+//Vai verificar nas requisicoes se o usuario tem um token valido, se nao tiver, lança um erro
+export default async (req, res, next) => {
+  try {
+    let { authorization } = req.headers;
+    if (!authorization) {
+      throw new AuthException(
+        UNAUTHORIZED,
+        "Access token was not informed."
+      );
+    }
+    let accessToken = authorization;
+    if (accessToken.includes(emptySpace)) { //Verifica se tem um espaco em branco no Token - pra separar do Bearer
+      accessToken = accessToken.split(emptySpace)[1];
+    } else {
+      accessToken = authorization; //Se mandar só o token, também funciona
+    }
+    const decoded = await promisify(jwt.verify)(
+      accessToken,
+      API_SECRET
+    );
+    req.authUser = decoded.authUser;
+    return next();
+  } catch (err) {
+    const status = err.status ? err.status : INTERNAL_SERVER_ERROR;
+    return res.status(status).json({ status, message: err.message });
+  }
+};

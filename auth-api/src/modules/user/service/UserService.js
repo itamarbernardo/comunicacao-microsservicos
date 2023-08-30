@@ -3,8 +3,8 @@ import jwt from "jsonwebtoken";
 
 import UserRepository from "../repository/UserRepository.js";
 import UserException from "../exception/UserException.js";
-import * as httpStatus from '../../../../config/constants/httpStatus.js'
-import * as secrets from '../../../constants/secrets.js'
+import * as httpStatus from '../../../config/constants/httpStatus.js'
+import * as secrets from '../../../config/constants/secrets.js'
 class UserService {
 
     async findByEmail(req) {
