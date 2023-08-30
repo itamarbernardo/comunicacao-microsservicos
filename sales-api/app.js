@@ -37,13 +37,20 @@ app.get("/api/initial-data", async (req, res) => {
     return res.json({ message: "Data created." });
   });
 
-  app.get('/api/status', (req, res) => {
-    return res.status(200).json({
-        service: "Sales-API",
-        status: "up",
-        httpStatus: 200
-    })
+  app.get('/', (req, res) => { //Endpoint pra checar o status na raiz da aplicação
+    return res.status(200).json(getOkResponse())
 })
+  app.get('/api/status', (req, res) => {
+    return res.status(200).json(getOkResponse())
+})
+
+function getOkResponse(){
+  return {
+    service: "Sales-API",
+    status: "up",
+    httpStatus: 200
+} //Retorna um JSON de resposta
+}
 
 app.use(tracing) //A partir daqui, toda requisicao tem que ter um transactionId  
 app.use(checkToken) //A partir daqui, qualquer requisicao vai precisar conter o token Authorization com um token de acesso válido

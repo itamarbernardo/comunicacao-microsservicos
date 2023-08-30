@@ -13,13 +13,22 @@ const CONTAINER_ENV = "container"
 
 app.use(express.json())
 
-app.get('/api/status', (req, res) => {
-    return res.status(200).json({
-        service: "Auth-API",
-        status: "up",
-        httpStatus: 200
-    })
+//Endpoint pra checar o status na raiz da aplicação
+app.get('/', (req, res) => {
+    return res.status(200).json(getOkResponse())
 })
+
+app.get('/api/status', (req, res) => {
+    return res.status(200).json(getOkResponse())
+})
+
+function getOkResponse(){
+    return {
+      service: "Auth-API",
+      status: "up",
+      httpStatus: 200
+  } //Retorna um JSON de resposta
+}
 
 startApplication()
 function startApplication(){
